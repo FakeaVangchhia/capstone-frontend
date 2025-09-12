@@ -32,32 +32,42 @@ export default function Home() {
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col md:ml-0 relative">
           {/* Top Bar */}
-          <div className="glass-dark border-b border-white/10 p-4 flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`md:hidden glass-effect rounded-lg hover:bg-white/20 transition-all ${!isMobile ? 'hidden' : ''}`}
-              onClick={() => setSidebarOpen(true)}
-              data-testid="button-open-sidebar"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-            
+          <div className="glass-dark border-b border-white/10 p-4 flex items-center justify-between backdrop-blur-xl">
             <div className="flex items-center space-x-4">
-              <div className="hidden md:flex items-center space-x-2">
-                <Circle className="w-2 h-2 text-green-400 fill-current pulse-glow" />
-                <span className="text-sm text-muted-foreground text-shadow">AI Assistant Online</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`md:hidden glass-button rounded-xl p-3 hover-lift ${!isMobile ? 'hidden' : ''}`}
+                onClick={() => setSidebarOpen(true)}
+                data-testid="button-open-sidebar"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+              
+              <div className="hidden md:flex items-center space-x-3">
+                <div className="relative">
+                  <Circle className="w-3 h-3 text-green-400 fill-current pulse-glow" />
+                  <div className="absolute inset-0 w-3 h-3 bg-green-400 rounded-full animate-ping opacity-20"></div>
+                </div>
+                <span className="text-sm text-muted-foreground text-shadow font-medium">AI Assistant Online</span>
               </div>
             </div>
 
-            <Button 
-              variant="ghost" 
-              className="glass-effect rounded-lg px-4 py-2 hover:bg-white/20 transition-all duration-300 text-shadow"
-              data-testid="button-login"
-            >
-              <User className="w-4 h-4 text-primary mr-2" />
-              <span className="font-medium">Login</span>
-            </Button>
+            <div className="flex items-center space-x-3">
+              <div className="hidden sm:flex items-center space-x-2 glass-effect rounded-full px-3 py-1">
+                <div className="w-2 h-2 bg-primary rounded-full"></div>
+                <span className="text-xs text-muted-foreground">Beta</span>
+              </div>
+              
+              <Button 
+                variant="ghost" 
+                className="glass-button rounded-xl px-4 py-2 hover-lift text-shadow group"
+                data-testid="button-login"
+              >
+                <User className="w-4 h-4 text-primary mr-2 group-hover:scale-110 transition-transform" />
+                <span className="font-medium">Login</span>
+              </Button>
+            </div>
           </div>
 
           {/* Chat Messages Area */}

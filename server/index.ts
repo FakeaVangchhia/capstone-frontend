@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import dotenv from "dotenv";
+import { registerRoutes } from "./routes.js";
+import { setupVite, serveStatic, log } from "./vite.js";
 
 const app = express();
 app.use(express.json());
@@ -36,6 +37,21 @@ app.use((req, res, next) => {
   next();
 });
 
+dotenv.config();
+
+// Process-level error handlers to keep the server stable and log issues
+process.on("unhandledRejection", (reason: any) => {
+  try {
+    log(`unhandledRejection: ${reason?.message || String(reason)}`);
+  } catch {}
+});
+
+process.on("uncaughtException", (err: any) => {
+  try {
+    log(`uncaughtException: ${err?.message || String(err)}`);
+  } catch {}
+});
+
 (async () => {
   const server = await registerRoutes(app);
 
@@ -43,8 +59,13 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
+    if (status >= 500) {
+      log(`Error ${status}: ${message}`);
+    }
+    res.status(status).json({
+      message,
+      ...(app.get("env") === "development" && err?.stack ? { stack: err.stack } : {}),
+    });
   });
 
   // importantly only setup vite in development and after
@@ -61,11 +82,11 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
+  const host = process.env.HOST || "127.0.0.1";
   server.listen({
     port,
-    host: "0.0.0.0",
-    reusePort: true,
+    host,
   }, () => {
-    log(`serving on port ${port}`);
+    log(`serving on http://${host}:${port}`);
   });
 })();

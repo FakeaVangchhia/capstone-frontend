@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
+import { ChatProvider } from "@/hooks/use-chat";
 
 function Router() {
   return (
@@ -21,8 +22,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
-          <Toaster />
-          <Router />
+          <ChatProvider>
+            <Toaster />
+            <Router />
+          </ChatProvider>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

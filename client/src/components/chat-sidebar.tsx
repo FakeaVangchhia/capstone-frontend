@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { X, Plus, MessageCircle, GraduationCap } from "lucide-react";
+import { X, Plus, MessageCircle, GraduationCap, MoreVertical } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { type ChatSession } from "@shared/schema";
 import { useChat } from "@/hooks/use-chat";
@@ -67,21 +67,25 @@ export default function ChatSidebar({ isOpen, onClose }: ChatSidebarProps) {
         {/* Sidebar Header */}
         <div className="p-6 border-b border-white/10">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <GraduationCap className="w-6 h-6 text-primary" />
-              <h1 className="text-xl font-bold text-shadow">StudyBot</h1>
+            <div className="flex items-center space-x-3">
+              <div className="glass-effect rounded-full w-10 h-10 flex items-center justify-center bounce-in">
+                <GraduationCap className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-shadow">CollegeGPT</h1>
+                <p className="text-xs text-muted-foreground text-shadow">AI Study Assistant</p>
+              </div>
             </div>
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden text-muted-foreground hover:text-foreground transition-colors"
+              className="md:hidden glass-button rounded-lg p-2 hover-lift"
               onClick={onClose}
               data-testid="button-close-sidebar"
             >
               <X className="w-5 h-5" />
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground mt-1 text-shadow">AI Study Assistant</p>
         </div>
 
         {/* New Chat Button */}
@@ -89,11 +93,13 @@ export default function ChatSidebar({ isOpen, onClose }: ChatSidebarProps) {
           <Button
             onClick={handleNewChat}
             disabled={createSessionMutation.isPending}
-            className="w-full glass-effect rounded-lg p-3 text-left hover:bg-white/20 transition-all duration-300 flex items-center space-x-3 text-shadow"
+            className="w-full glass-button rounded-xl p-4 text-left hover-lift flex items-center space-x-3 text-shadow group"
             variant="ghost"
             data-testid="button-new-chat"
           >
-            <Plus className="w-4 h-4 text-primary" />
+            <div className="glass-effect rounded-full w-8 h-8 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Plus className="w-4 h-4 text-primary" />
+            </div>
             <span className="font-medium">
               {createSessionMutation.isPending ? "Creating..." : "New Chat"}
             </span>
@@ -103,57 +109,58 @@ export default function ChatSidebar({ isOpen, onClose }: ChatSidebarProps) {
         {/* Chat History */}
         <div className="flex-1 overflow-y-auto chat-scroll px-4 pb-4">
           <h3 className="text-sm font-semibold text-muted-foreground mb-3 text-shadow">Recent Chats</h3>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {chatSessions.length === 0 ? (
-              <div className="text-center py-8">
-                <MessageCircle className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground text-shadow">No chat history yet</p>
+              <div className="text-center py-8 fade-in">
+                <div className="glass-effect rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                  <MessageCircle className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground text-shadow mb-1">No chat history yet</p>
                 <p className="text-xs text-muted-foreground text-shadow">Start a new conversation!</p>
               </div>
             ) : (
-              chatSessions.map((session) => (
-                <button
-                  key={session.id}
-                  onClick={() => handleSessionSelect(session)}
-                  className={`history-item rounded-lg p-3 cursor-pointer w-full text-left ${
-                    currentSession?.id === session.id ? 'border-primary/50 bg-primary/10' : ''
-                  }`}
-                  data-testid={`button-session-${session.id}`}
-                >
-                  <div className="flex items-start space-x-3">
-                    <MessageCircle className="w-4 h-4 text-primary flex-shrink-0 mt-1" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate text-shadow">
-                        {session.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1 text-shadow">
-                        {formatTimeAgo(session.updatedAt || session.createdAt || new Date())}
-                      </p>
+              chatSessions.map((session, index) => (
+                <div key={session.id} className="group relative fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                  <button
+                    onClick={() => handleSessionSelect(session)}
+                    className={`history-item rounded-xl p-4 pr-12 cursor-pointer w-full text-left hover-lift transition-all duration-300 ${
+                      currentSession?.id === session.id 
+                        ? 'border-primary/50 bg-primary/15 shadow-lg shadow-primary/20' 
+                        : 'hover:border-primary/30'
+                    }`}
+                    data-testid={`button-session-${session.id}`}
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className="glass-effect rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+                        <MessageCircle className="w-4 h-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate text-shadow mb-1">
+                          {session.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground text-shadow">
+                          {formatTimeAgo(session.updatedAt || session.createdAt || new Date())}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </button>
+                  </button>
+
+                  {/* Hover three-dots button */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 glass-button rounded-lg hover-lift"
+                    onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                      e.stopPropagation();
+                      // TODO: open dropdown menu with actions (rename, delete, etc.)
+                    }}
+                    aria-label="More options"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </div>
               ))
             )}
-          </div>
-        </div>
-
-        {/* Theme Customization */}
-        <div className="p-4 border-t border-white/10">
-          <h4 className="text-sm font-semibold text-muted-foreground mb-3 text-shadow">Theme Options</h4>
-          <div className="grid grid-cols-3 gap-2">
-            {themeColors.map((theme) => (
-              <button
-                key={theme.name}
-                onClick={() => setSelectedTheme(theme.name)}
-                className={`theme-button w-12 h-12 rounded-lg border relative overflow-hidden ${
-                  selectedTheme === theme.name ? 'ring-2 ring-primary' : 'border-white/20'
-                }`}
-                style={{ background: theme.gradient }}
-                data-testid={`button-theme-${theme.name}`}
-              >
-                <div className="absolute inset-0 bg-white/20 backdrop-blur-sm"></div>
-              </button>
-            ))}
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import { Button } from "../components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Paperclip, Send } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
@@ -39,26 +39,18 @@ export default function MessageInput() {
       });
       return response.json();
     },
-    onSuccess: () => {
-      if (currentSession) {
-        queryClient.invalidateQueries({ 
-          queryKey: ["/api/chat-sessions", currentSession.id, "messages"] 
-        });
-        queryClient.invalidateQueries({ 
-          queryKey: ["/api/chat-sessions"] 
-        });
-      }
+    onSuccess: (_data, variables) => {
+      const { sessionId } = variables;
+      // Always invalidate using the explicit sessionId to avoid stale closures
+      queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions", sessionId, "messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions"] });
       setMessage("");
       setCharCount(0);
       autoResize();
       
       // Poll for AI response
       setTimeout(() => {
-        if (currentSession) {
-          queryClient.invalidateQueries({ 
-            queryKey: ["/api/chat-sessions", currentSession.id, "messages"] 
-          });
-        }
+        queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions", sessionId, "messages"] });
       }, 1500);
     },
     onError: () => {
@@ -123,52 +115,70 @@ export default function MessageInput() {
   const isLoading = sendMessageMutation.isPending || createSessionMutation.isPending;
 
   return (
-    <div className="p-4">
+    <div className="p-4 relative">
       <div className="max-w-4xl mx-auto">
-        <div className="floating-input rounded-2xl p-4">
+        <div className="floating-input rounded-2xl p-4 hover-lift">
           <div className="flex items-end space-x-3">
             <Button
               variant="ghost"
               size="sm"
-              className="glass-effect rounded-xl p-3 hover:bg-white/20 transition-all duration-300 flex-shrink-0"
+              className="glass-button rounded-xl p-3 flex-shrink-0 hover-lift"
               data-testid="button-attach-file"
             >
-              <Paperclip className="w-4 h-4 text-muted-foreground" />
+              <Paperclip className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
             </Button>
             
-            <div className="flex-1">
+            <div className="flex-1 relative">
               <Textarea
                 ref={textareaRef}
                 value={message}
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask me anything about your studies..."
-                className="w-full bg-transparent text-foreground placeholder-muted-foreground resize-none focus:outline-none text-shadow border-none focus:ring-0 min-h-[24px] p-0"
+                className="w-full bg-transparent text-foreground placeholder-muted-foreground resize-none focus:outline-none text-shadow border-none focus:ring-0 min-h-[20px] p-0 transition-all duration-200"
+                style={{ outline: 'none', border: 'none', boxShadow: 'none', minHeight: '12px', maxHeight: '64px' }}
                 disabled={isLoading}
                 data-testid="input-message"
               />
+              {isLoading && (
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-primary rounded-full typing-indicator"></div>
+                    <div className="w-2 h-2 bg-primary rounded-full typing-indicator" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-2 h-2 bg-primary rounded-full typing-indicator" style={{ animationDelay: '0.4s' }}></div>
+                  </div>
+                </div>
+              )}
             </div>
             
             <Button
               onClick={handleSend}
               disabled={!message.trim() || isLoading}
-              className="glass-effect rounded-xl p-3 hover:bg-primary/20 transition-all duration-300 flex-shrink-0 pulse-glow disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`glass-button rounded-xl p-3 flex-shrink-0 transition-all duration-300 ${
+                message.trim() && !isLoading 
+                  ? 'pulse-glow hover:scale-105' 
+                  : 'opacity-50 cursor-not-allowed'
+              }`}
               variant="ghost"
               data-testid="button-send-message"
             >
-              <Send className="w-4 h-4 text-primary" />
+              <Send className={`w-4 h-4 transition-colors ${
+                message.trim() && !isLoading ? 'text-primary' : 'text-muted-foreground'
+              }`} />
             </Button>
           </div>
           
           <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
               <span className="text-shadow">Press Enter to send, Shift+Enter for new line</span>
             </div>
             <span 
-              className={`text-shadow ${charCount > 1800 ? 'text-destructive' : ''}`}
+              className={`text-shadow transition-colors ${
+                charCount > 1800 ? 'text-destructive' : charCount > 1500 ? 'text-yellow-400' : ''
+              }`}
               data-testid="text-char-count"
             >
-              {charCount}/2000
+              {charCount > 0 && `${charCount}/2000`}
             </span>
           </div>
         </div>

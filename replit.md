@@ -1,6 +1,6 @@
 # Overview
 
-This is a full-stack chat application called StudyBot, designed as an AI-powered study companion. The application features a modern, responsive interface with real-time chat functionality. Users can create multiple chat sessions, send messages, and interact with an AI assistant through a sleek, glass-morphism styled interface.
+This is a full-stack chat application called CollegeGPT, designed as an AI-powered study companion. The application features a modern, responsive interface with real-time chat functionality. Users can create multiple chat sessions, send messages, and interact with an AI assistant through a sleek, glass-morphism styled interface.
 
 The application is built using a monorepo structure with separate client and server directories, sharing common types and schemas through a shared directory.
 
