@@ -5,10 +5,14 @@ import ChatArea from "@/components/chat-area";
 import MessageInput from "@/components/message-input";
 import { Button } from "@/components/ui/button";
 import { Menu, User, Circle } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { LoginDialog } from "@/components/login-dialog";
 
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { user, logout } = useAuth();
+  const [loginOpen, setLoginOpen] = useState(false);
 
   return (
     <div className="gradient-bg min-h-screen text-foreground overflow-hidden">
@@ -59,14 +63,30 @@ export default function Home() {
                 <span className="text-xs text-muted-foreground">Beta</span>
               </div>
               
-              <Button 
-                variant="ghost" 
-                className="glass-button rounded-xl px-4 py-2 hover-lift text-shadow group"
-                data-testid="button-login"
-              >
-                <User className="w-4 h-4 text-primary mr-2 group-hover:scale-110 transition-transform" />
-                <span className="font-medium">Login</span>
-              </Button>
+              {!user ? (
+                <Button 
+                  variant="ghost" 
+                  className="glass-button rounded-xl px-4 py-2 hover-lift text-shadow group"
+                  data-testid="button-login"
+                  onClick={() => setLoginOpen(true)}
+                >
+                  <User className="w-4 h-4 text-primary mr-2 group-hover:scale-110 transition-transform" />
+                  <span className="font-medium">Login</span>
+                </Button>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <div className="glass-effect rounded-full px-3 py-1 text-sm text-shadow">
+                    <span className="text-muted-foreground">@{user.username}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    className="glass-button rounded-xl px-3 py-2 hover-lift text-shadow"
+                    onClick={logout}
+                  >
+                    Logout
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -86,6 +106,7 @@ export default function Home() {
           data-testid="overlay-sidebar"
         />
       )}
+      <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
     </div>
   );
 }

@@ -16,10 +16,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return out;
   };
 
-  async function fwdJson(method: string, url: string, body?: any) {
+  async function fwdJson(method: string, url: string, body?: any, req?: any) {
+    const headers: any = body ? { "Content-Type": "application/json" } : {};
+    // Forward Authorization header if present
+    const auth = req?.headers?.authorization;
+    if (auth) headers["Authorization"] = auth;
     const res = await fetch(url, {
       method,
-      headers: body ? { "Content-Type": "application/json" } : undefined,
+      headers,
       body: body ? JSON.stringify(body) : undefined,
     });
     const text = await res.text();
@@ -30,12 +34,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return { status: res.status, data } as const;
   }
 
+  // Auth routes
+  app.post('/api/auth/register', async (req, res) => {
+    const { status, data } = await fwdJson('POST', `${BACKEND_BASE}/api/auth/register`, req.body, req);
+    return res.status(status).json(data);
+  });
+
+  app.post('/api/auth/login', async (req, res) => {
+    const { status, data } = await fwdJson('POST', `${BACKEND_BASE}/api/auth/login`, req.body, req);
+    return res.status(status).json(data);
+  });
+
+  app.get('/api/auth/me', async (req, res) => {
+    const { status, data } = await fwdJson('GET', `${BACKEND_BASE}/api/auth/me`, undefined, req);
+    return res.status(status).json(data);
+  });
+
+  app.post('/api/auth/logout', async (req, res) => {
+    const { status, data } = await fwdJson('POST', `${BACKEND_BASE}/api/auth/logout`, {}, req);
+    return res.status(status).json(data);
+  });
+
   // Get all chat sessions
   app.get("/api/chat-sessions", async (req, res) => {
     try {
       const userId = (req.query.userId as string) || "";
       const url = `${BACKEND_BASE}/api/chat-sessions${userId ? `?userId=${encodeURIComponent(userId)}` : ""}`;
-      const { status, data } = await fwdJson("GET", url);
+      const { status, data } = await fwdJson("GET", url, undefined, req);
       if (status >= 400) return res.status(status).json(data);
       // Django returns snake_case; convert to camelCase
       return res.json(toCamel(data));
@@ -52,7 +77,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     // Map to Django payload
     const payload = { title: parsed.data.title, user_id: parsed.data.userId ?? null } as any;
-    const { status, data } = await fwdJson("POST", `${BACKEND_BASE}/api/chat-sessions`, payload);
+    const { status, data } = await fwdJson("POST", `${BACKEND_BASE}/api/chat-sessions`, payload, req);
     if (status >= 400) return res.status(status).json(data);
     return res.json(toCamel(data));
   });
@@ -61,7 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/chat-sessions/:sessionId/messages", async (req, res) => {
     try {
       const { sessionId } = req.params;
-      const { status, data } = await fwdJson("GET", `${BACKEND_BASE}/api/chat-sessions/${encodeURIComponent(sessionId)}/messages`);
+      const { status, data } = await fwdJson("GET", `${BACKEND_BASE}/api/chat-sessions/${encodeURIComponent(sessionId)}/messages`, undefined, req);
       if (status >= 400) return res.status(status).json(data);
       // Convert created_at -> createdAt, etc.
       return res.json(toCamel(data));
@@ -77,9 +102,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(422).json({ message: "Invalid message data", issues: parsed.error.issues });
     }
     // Django expects the same keys: sessionId, content, role
-    const { status, data } = await fwdJson("POST", `${BACKEND_BASE}/api/messages`, parsed.data);
+    const { status, data } = await fwdJson("POST", `${BACKEND_BASE}/api/messages`, parsed.data, req);
     if (status >= 400) return res.status(status).json(data);
     return res.json(toCamel(data));
+  });
+
+  // Rename chat session
+  app.patch("/api/chat-sessions/:sessionId", async (req, res) => {
+    const { sessionId } = req.params;
+    const { status, data } = await fwdJson(
+      "PATCH",
+      `${BACKEND_BASE}/api/chat-sessions/${encodeURIComponent(sessionId)}`,
+      req.body,
+      req,
+    );
+    return res.status(status).json(data);
+  });
+
+  // Delete chat session
+  app.delete("/api/chat-sessions/:sessionId", async (req, res) => {
+    const { sessionId } = req.params;
+    const { status, data } = await fwdJson(
+      "DELETE",
+      `${BACKEND_BASE}/api/chat-sessions/${encodeURIComponent(sessionId)}`,
+      undefined,
+      req,
+    );
+    return res.status(status).json(data);
   });
 
   // API 404 handler

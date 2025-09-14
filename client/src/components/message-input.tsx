@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "../components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Paperclip, Send } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useChat } from "@/hooks/use-chat";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function MessageInput() {
   const [message, setMessage] = useState("");
@@ -14,17 +15,18 @@ export default function MessageInput() {
   const queryClient = useQueryClient();
   const { currentSession, setCurrentSession } = useChat();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const createSessionMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("POST", "/api/chat-sessions", {
         title: message.slice(0, 50) + (message.length > 50 ? "..." : ""),
-        userId: null,
+        userId: user?.id ?? null,
       });
       return response.json();
     },
     onSuccess: (newSession) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions", user?.id || null] });
       setCurrentSession(newSession);
       return newSession;
     },
@@ -43,7 +45,7 @@ export default function MessageInput() {
       const { sessionId } = variables;
       // Always invalidate using the explicit sessionId to avoid stale closures
       queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions", sessionId, "messages"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions", user?.id || null] });
       setMessage("");
       setCharCount(0);
       autoResize();

@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { getToken } from "@/lib/auth";
 
 const API_BASE = (import.meta as any)?.env?.VITE_API_BASE || "";
 
@@ -15,9 +16,13 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   const fullUrl = API_BASE ? `${API_BASE}${url}` : url;
+  const token = getToken();
   const res = await fetch(fullUrl, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: {
+      ...(data ? { "Content-Type": "application/json" } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -34,7 +39,11 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const rel = queryKey.join("/") as string;
     const url = API_BASE ? `${API_BASE}${rel}` : rel;
+    const token = getToken();
     const res = await fetch(url, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       credentials: "include",
     });
 

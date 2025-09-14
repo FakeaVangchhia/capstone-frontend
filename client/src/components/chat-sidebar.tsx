@@ -5,6 +5,10 @@ import { X, Plus, MessageCircle, GraduationCap, MoreVertical } from "lucide-reac
 import { apiRequest } from "@/lib/queryClient";
 import { type ChatSession } from "@shared/schema";
 import { useChat } from "@/hooks/use-chat";
+import { useAuth } from "@/hooks/use-auth";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface ChatSidebarProps {
   isOpen: boolean;
@@ -21,22 +25,62 @@ export default function ChatSidebar({ isOpen, onClose }: ChatSidebarProps) {
   const [selectedTheme, setSelectedTheme] = useState("purple");
   const queryClient = useQueryClient();
   const { currentSession, setCurrentSession } = useChat();
+  const { user } = useAuth();
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameTitle, setRenameTitle] = useState("");
+  const [renamingId, setRenamingId] = useState<string | null>(null);
 
   const { data: chatSessions = [] } = useQuery<ChatSession[]>({
-    queryKey: ["/api/chat-sessions"],
+    queryKey: ["/api/chat-sessions", user?.id || null],
+    // Explicitly filter by userId to ensure per-user recent chats
+    queryFn: async () => {
+      if (!user?.id) return [] as ChatSession[];
+      const res = await apiRequest(
+        "GET",
+        `/api/chat-sessions?userId=${encodeURIComponent(user.id)}`,
+      );
+      return res.json();
+    },
+    enabled: !!user?.id,
   });
 
   const createSessionMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("POST", "/api/chat-sessions", {
         title: "New Chat",
-        userId: null,
+        userId: user?.id ?? null,
       });
       return response.json();
     },
     onSuccess: (newSession) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions", user?.id || null] });
       setCurrentSession(newSession);
+    },
+  });
+
+  const renameSessionMutation = useMutation({
+    mutationFn: async ({ id, title }: { id: string; title: string }) => {
+      const res = await apiRequest("PATCH", `/api/chat-sessions/${encodeURIComponent(id)}`, { title });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions", user?.id || null] });
+      setRenameOpen(false);
+      setRenamingId(null);
+      setRenameTitle("");
+    },
+  });
+
+  const deleteSessionMutation = useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const res = await apiRequest("DELETE", `/api/chat-sessions/${encodeURIComponent(id)}`);
+      return res.json();
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions", user?.id || null] });
+      if (currentSession?.id === vars.id) {
+        setCurrentSession(null);
+      }
     },
   });
 
@@ -146,24 +190,76 @@ export default function ChatSidebar({ isOpen, onClose }: ChatSidebarProps) {
                   </button>
 
                   {/* Hover three-dots button */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 glass-button rounded-lg hover-lift"
-                    onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                      e.stopPropagation();
-                      // TODO: open dropdown menu with actions (rename, delete, etc.)
-                    }}
-                    aria-label="More options"
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-2 top-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 glass-button rounded-lg hover-lift"
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => e.stopPropagation()}
+                        aria-label="More options"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRenamingId(session.id);
+                          setRenameTitle(session.title);
+                          setRenameOpen(true);
+                        }}
+                      >
+                        Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteSessionMutation.mutate({ id: session.id });
+                        }}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               ))
             )}
           </div>
         </div>
       </div>
+      <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Rename Chat</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              value={renameTitle}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRenameTitle(e.target.value)}
+              placeholder="New title"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setRenameOpen(false)}>Cancel</Button>
+              <Button
+                variant="ghost"
+                className="glass-button"
+                disabled={!renameTitle.trim() || !renamingId || renameSessionMutation.isPending}
+                onClick={() => {
+                  if (renamingId && renameTitle.trim()) {
+                    renameSessionMutation.mutate({ id: renamingId, title: renameTitle.trim() });
+                  }
+                }}
+              >
+                {renameSessionMutation.isPending ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
