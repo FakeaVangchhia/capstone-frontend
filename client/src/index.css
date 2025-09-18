@@ -145,8 +145,8 @@
   }
 
   .history-item:hover {
-    background: var(--history-item-hover);
     border-color: var(--glass-border);
+    background: var(--history-item-bg) !important;
   }
 
   .theme-button {

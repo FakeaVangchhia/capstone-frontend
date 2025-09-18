@@ -50,6 +50,13 @@ export default function MessageInput() {
       setCharCount(0);
       autoResize();
       
+      // Keep focus on the textarea after sending message
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+        }
+      }, 100);
+      
       // Poll for AI response
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["/api/chat-sessions", sessionId, "messages"] });
@@ -61,6 +68,12 @@ export default function MessageInput() {
         description: "Failed to send message. Please try again.",
         variant: "destructive",
       });
+      // Keep focus even on error
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+        }
+      }, 100);
     },
   });
 
@@ -114,6 +127,31 @@ export default function MessageInput() {
     autoResize();
   }, [message]);
 
+  // Auto-focus the textarea when component mounts and maintain focus
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, []);
+
+  // Prevent losing focus when clicking on other elements (except when explicitly clicking elsewhere)
+  const handleTextareaBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+    // Only allow blur if user clicked on a button or outside the message input area
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!relatedTarget || 
+        relatedTarget.tagName === 'BUTTON' || 
+        !e.currentTarget.closest('.floating-input')?.contains(relatedTarget)) {
+      // Allow the blur
+      return;
+    }
+    // Otherwise, refocus the textarea
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }, 0);
+  };
+
   const isLoading = sendMessageMutation.isPending || createSessionMutation.isPending;
 
   return (
@@ -136,6 +174,7 @@ export default function MessageInput() {
                 value={message}
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
+                onBlur={handleTextareaBlur}
                 placeholder="Ask me anything about your studies..."
                 className="w-full bg-transparent text-foreground placeholder-muted-foreground resize-none focus:outline-none text-shadow border-none focus:ring-0 min-h-[20px] p-0 transition-all duration-200"
                 style={{ outline: 'none', border: 'none', boxShadow: 'none', minHeight: '12px', maxHeight: '64px' }}

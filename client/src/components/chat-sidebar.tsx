@@ -167,7 +167,7 @@ export default function ChatSidebar({ isOpen, onClose }: ChatSidebarProps) {
                 <div key={session.id} className="group relative fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
                   <button
                     onClick={() => handleSessionSelect(session)}
-                    className={`history-item rounded-xl p-4 pr-12 cursor-pointer w-full text-left hover-lift transition-all duration-300 ${
+                    className={`history-item rounded-xl p-4 pr-12 cursor-pointer w-full text-left transition-all duration-300 ${
                       currentSession?.id === session.id 
                         ? 'border-primary/50 bg-primary/15 shadow-lg shadow-primary/20' 
                         : 'hover:border-primary/30'
