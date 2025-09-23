@@ -15,15 +15,7 @@ export default function Home() {
   const [loginOpen, setLoginOpen] = useState(false);
 
   return (
-    <div className="gradient-bg min-h-screen text-foreground overflow-hidden">
-      {/* Background Overlay */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-10 left-10 w-32 h-32 bg-primary/20 rounded-full blur-xl"></div>
-          <div className="absolute top-1/3 right-20 w-40 h-40 bg-accent/15 rounded-full blur-xl"></div>
-          <div className="absolute bottom-20 left-1/3 w-28 h-28 bg-primary/25 rounded-full blur-xl"></div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background text-foreground overflow-hidden">
 
       {/* Main Container */}
       <div className="relative z-10 h-screen flex">
@@ -36,7 +28,7 @@ export default function Home() {
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col md:ml-0 relative">
           {/* Top Bar */}
-          <div className="glass-dark border-b border-white/10 p-4 flex items-center justify-between backdrop-blur-xl">
+          <div className="bg-card/80 border-b border-border p-4 flex items-center justify-between backdrop-blur-xl">
             <div className="flex items-center space-x-4">
               <Button
                 variant="ghost"

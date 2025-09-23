@@ -37,9 +37,9 @@ export function LoginDialog({ open, onOpenChange }: { open: boolean; onOpenChang
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-dark rounded-2xl">
+      <DialogContent className="bg-card rounded-2xl border border-border">
         <DialogHeader>
-          <DialogTitle className="text-shadow">{mode === "login" ? "Login" : "Create account"}</DialogTitle>
+          <DialogTitle>{mode === "login" ? "Login" : "Create account"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <Input
@@ -57,7 +57,7 @@ export function LoginDialog({ open, onOpenChange }: { open: boolean; onOpenChang
           />
           {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="flex items-center justify-between">
-            <Button onClick={submit} disabled={loading || !username || !password} variant="ghost" className="glass-button rounded-xl">
+            <Button onClick={submit} disabled={loading || !username || !password}>
               {loading ? "Please wait..." : mode === "login" ? "Login" : "Register"}
             </Button>
             <button

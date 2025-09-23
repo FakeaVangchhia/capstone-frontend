@@ -105,11 +105,11 @@ export default function ChatSidebar({ isOpen, onClose }: ChatSidebarProps) {
 
   return (
     <>
-      <div className={`sidebar-glass w-80 md:w-72 lg:w-80 h-full fixed md:relative z-30 flex flex-col transition-transform duration-300 ${
+      <div className={`bg-sidebar w-80 md:w-72 lg:w-80 h-full fixed md:relative z-30 flex flex-col transition-transform duration-300 border-r border-sidebar-border ${
         isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       }`}>
         {/* Sidebar Header */}
-        <div className="p-6 border-b border-white/10">
+        <div className="p-6 border-b border-border bg-card/60 backdrop-blur-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="glass-effect rounded-full w-10 h-10 flex items-center justify-center bounce-in">
@@ -133,7 +133,7 @@ export default function ChatSidebar({ isOpen, onClose }: ChatSidebarProps) {
         </div>
 
         {/* New Chat Button */}
-        <div className="p-4">
+        <div className="p-4 bg-transparent">
           <Button
             onClick={handleNewChat}
             disabled={createSessionMutation.isPending}
@@ -151,8 +151,8 @@ export default function ChatSidebar({ isOpen, onClose }: ChatSidebarProps) {
         </div>
 
         {/* Chat History */}
-        <div className="flex-1 overflow-y-auto chat-scroll px-4 pb-4">
-          <h3 className="text-sm font-semibold text-muted-foreground mb-3 text-shadow">Recent Chats</h3>
+        <div className="flex-1 overflow-y-auto chat-scroll px-4 pb-4 bg-transparent">
+          <h3 className="text-sm font-semibold text-muted-foreground mb-3">Recent Chats</h3>
           <div className="space-y-3">
             {chatSessions.length === 0 ? (
               <div className="text-center py-8 fade-in">
