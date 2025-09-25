@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Paperclip, Send } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, API_BASE } from "@/lib/queryClient";
 import { useChat } from "@/hooks/use-chat";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,6 +16,7 @@ export default function MessageInput() {
   const { currentSession, setCurrentSession } = useChat();
   const { toast } = useToast();
   const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const createSessionMutation = useMutation({
     mutationFn: async () => {
@@ -159,14 +160,50 @@ export default function MessageInput() {
       <div className="max-w-4xl mx-auto">
         <div className="floating-input rounded-2xl p-4 hover-lift">
           <div className="flex items-end space-x-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="glass-button rounded-xl p-3 flex-shrink-0 hover-lift"
-              data-testid="button-attach-file"
-            >
-              <Paperclip className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
-            </Button>
+            {user?.is_admin && (
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    try {
+                      const url = `${API_BASE}/api/admin/upload`;
+                      const form = new FormData();
+                      form.append("file", f);
+                      const token = (window as any).localStorage.getItem("auth_token");
+                      const res = await fetch(url, {
+                        method: "POST",
+                        body: form,
+                        headers: {
+                          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                          // Don't set Content-Type - let browser set it automatically with boundary
+                        },
+                      });
+                      if (!res.ok) throw new Error(await res.text());
+                      toast({ title: "Uploaded", description: "Document indexed into knowledge base." });
+                    } catch (err: any) {
+                      toast({ title: "Upload failed", description: err?.message || "Could not upload", variant: "destructive" });
+                    } finally {
+                      if (e.currentTarget) {
+                        e.currentTarget.value = "";
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  variant="ghost"
+                  size="sm"
+                  className="glass-button rounded-xl p-3 flex-shrink-0 hover-lift"
+                  data-testid="button-attach-file"
+                >
+                  <Paperclip className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+                </Button>
+              </>
+            )}
             
             <div className="flex-1 relative">
               <Textarea

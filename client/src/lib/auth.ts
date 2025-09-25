@@ -1,4 +1,4 @@
-export type AuthUser = { id: string; username: string };
+export type AuthUser = { id: string; username: string; is_admin?: boolean };
 
 const TOKEN_KEY = "auth_token";
 const USER_KEY = "auth_user";

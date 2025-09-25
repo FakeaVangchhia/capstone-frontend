@@ -1,7 +1,7 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { getToken } from "@/lib/auth";
 
-const API_BASE = (import.meta as any)?.env?.VITE_API_BASE || "";
+export const API_BASE = (import.meta as any)?.env?.VITE_API_BASE || "";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {

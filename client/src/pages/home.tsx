@@ -4,7 +4,8 @@ import ChatSidebar from "@/components/chat-sidebar";
 import ChatArea from "@/components/chat-area";
 import MessageInput from "@/components/message-input";
 import { Button } from "@/components/ui/button";
-import { Menu, User, Circle } from "lucide-react";
+import { Menu, User, Circle, Settings } from "lucide-react";
+import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { LoginDialog } from "@/components/login-dialog";
 
@@ -67,6 +68,17 @@ export default function Home() {
                 </Button>
               ) : (
                 <div className="flex items-center space-x-2">
+                  {user.is_admin && (
+                    <Link href="/admin">
+                      <Button
+                        variant="ghost"
+                        className="glass-button rounded-xl px-3 py-2 hover-lift text-shadow group"
+                        title="Admin Dashboard"
+                      >
+                        <Settings className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+                      </Button>
+                    </Link>
+                  )}
                   <div className="glass-effect rounded-full px-3 py-1 text-sm text-shadow">
                     <span className="text-muted-foreground">@{user.username}</span>
                   </div>

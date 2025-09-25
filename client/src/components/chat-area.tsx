@@ -51,7 +51,7 @@ export default function ChatArea() {
         {messages.map((message, index) => (
           <div
             key={message.id}
-            className={`flex items-start space-x-3 message-animation hover-lift ${
+            className={`flex items-start space-x-3 message-animation ${
               message.role === "user" ? "justify-end" : ""
             }`}
             style={{ animationDelay: `${index * 0.1}s` }}

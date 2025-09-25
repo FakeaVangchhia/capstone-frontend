@@ -107,6 +107,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.json(toCamel(data));
   });
 
+  // Admin upload (multipart passthrough)
+  app.post("/api/admin/upload", async (req, res) => {
+    try {
+      const url = `${BACKEND_BASE}/api/admin/upload`;
+      const headers: any = {};
+      const auth = req.headers?.authorization;
+      if (auth) headers["Authorization"] = auth;
+      if (req.headers["content-type"]) headers["Content-Type"] = String(req.headers["content-type"]);
+
+      const upstream = await fetch(url, {
+        method: "POST",
+        headers,
+        // pass the incoming multipart stream directly to backend
+        body: req as any,
+        // required by Node.js fetch when sending a stream body
+        // see https://github.com/nodejs/undici/issues/1800
+        // @ts-ignore - duplex is a valid runtime option
+        duplex: "half",
+      });
+
+      const text = await upstream.text();
+      let data: any = {};
+      try { data = text ? JSON.parse(text) : {}; } catch { data = { message: text || "" }; }
+      return res.status(upstream.status).json(data);
+    } catch (error: any) {
+      return res.status(500).json({ message: error?.message || "Upload failed" });
+    }
+  });
+
+  // Admin upload simple (multipart passthrough)
+  app.post("/api/admin/upload-simple", async (req, res) => {
+    try {
+      const url = `${BACKEND_BASE}/api/admin/upload-simple`;
+      const headers: any = {};
+      const auth = req.headers?.authorization;
+      if (auth) headers["Authorization"] = auth;
+      if (req.headers["content-type"]) headers["Content-Type"] = String(req.headers["content-type"]);
+
+      const upstream = await fetch(url, {
+        method: "POST",
+        headers,
+        // pass the incoming multipart stream directly to backend
+        body: req as any,
+        // required by Node.js fetch when sending a stream body
+        // see https://github.com/nodejs/undici/issues/1800
+        // @ts-ignore - duplex is a valid runtime option
+        duplex: "half",
+      });
+
+      const text = await upstream.text();
+      let data: any = {};
+      try { data = text ? JSON.parse(text) : {}; } catch { data = { message: text || "" }; }
+      return res.status(upstream.status).json(data);
+    } catch (error: any) {
+      return res.status(500).json({ message: error?.message || "Upload failed" });
+    }
+  });
+
   // Rename chat session
   app.patch("/api/chat-sessions/:sessionId", async (req, res) => {
     const { sessionId } = req.params;
